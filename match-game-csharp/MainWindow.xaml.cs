@@ -21,11 +21,29 @@ namespace match_game_csharp
     /// </summary>
     public partial class MainWindow : Window
     {
+        DispatcherTimer timer = new DispatcherTimer();
+        int tenthsOfSecondsElapsed;
+        int matchesFound;
+
         public MainWindow()
         {
             InitializeComponent();
 
+            timer.Interval = TimeSpan.FromSeconds(.1);
+            timer.Tick += Timer_Tick;
+
             SetUpGame();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            tenthsOfSecondsElapsed++;
+            timeTextBlock.Text = (tenthsOfSecondsElapsed / 10F).ToString("0.0s");
+            if (matchesFound==8)
+            {
+                timer.Stop();
+                timeTextBlock.Text = timeTextBlock.Text + " - Play again?";
+            }
         }
 
         private void SetUpGame()
@@ -46,13 +64,20 @@ namespace match_game_csharp
             int current = 0;
             foreach (TextBlock textBlock in mainGrid.Children.OfType<TextBlock>())
             {
-                int numberEmoji = animalEmoji.Count;
-                int chosenEmoji = randomGenerator.Next(numberEmoji);
-                string nextEmoji = animalEmoji[chosenEmoji];
-                textBlock.Text = nextEmoji;
-                animalEmoji.RemoveAt(chosenEmoji);
-                current += 1;
+                if (textBlock.Name != "timeTextBlock")
+                {
+                    int numberEmoji = animalEmoji.Count;
+                    int chosenEmoji = randomGenerator.Next(numberEmoji);
+                    string nextEmoji = animalEmoji[chosenEmoji];
+                    textBlock.Text = nextEmoji;
+                    textBlock.Visibility = Visibility.Visible;
+                    animalEmoji.RemoveAt(chosenEmoji);
+                    current += 1;
+                }
             }
+            timer.Start();
+            tenthsOfSecondsElapsed = 0;
+            matchesFound = 0;
         }
         TextBlock lastTextBlockClicked;
         bool findingMatch = false;
@@ -67,6 +92,7 @@ namespace match_game_csharp
             }
             else if (textBlock.Text==lastTextBlockClicked.Text)
             {
+                matchesFound++;
                 textBlock.Visibility = Visibility.Hidden;
                 findingMatch = false;
             }
@@ -74,6 +100,15 @@ namespace match_game_csharp
             {
                 lastTextBlockClicked.Visibility = Visibility.Visible;
                 findingMatch = false;
+            }
+        }
+
+        private void TimeTextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            //TODO: check for the number of emoji combinations
+            if (matchesFound==8)
+            {
+                SetUpGame();
             }
         }
     }
